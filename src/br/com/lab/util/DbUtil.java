@@ -13,8 +13,8 @@ public class DbUtil {
 	private static final String URL_DATABASE = "jdbc:sqlserver://localhost;databaseName=INF3AT;";
 	private static final String DRIVER_JDBC = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
 	
-	private static final String USUARIO_DB = "teste";
-	private static final String SENHA_USUARIO_DB = "gigio1974";
+	private static final String USUARIO_DB = "sa";
+	private static final String SENHA_USUARIO_DB = "1234";
 	
 	static {
 		try {
