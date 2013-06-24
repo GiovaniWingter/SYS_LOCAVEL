@@ -6,6 +6,7 @@ import java.awt.Toolkit;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JDialog;
+import javax.swing.JFormattedTextField;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
@@ -29,6 +30,8 @@ import javax.swing.ListSelectionModel;
 import br.com.lab.bean.Funcionario;
 import br.com.lab.dao.FuncionarioDao;
 import br.com.lab.exception.DaoException;
+import br.com.lab.util.MascaraUtil;
+import br.com.lab.util.ValidacaoUtil;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -38,6 +41,8 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import org.eclipse.wb.swing.FocusTraversalOnArray;
+import java.awt.Component;
 
 public class CadFuncionario extends JDialog {
     final JPanel lista = new JPanel();
@@ -52,11 +57,13 @@ public class CadFuncionario extends JDialog {
 	private JTextField textField;
 	private JTextField textField_1;
 	private JTextField textField_2;
-	private JTextField textField_3;
+	private JFormattedTextField textField_3;
 	private JTextField textField_4;
 	private JTextField textField_5;
+	private JTextField textField_6;
 
 	public CadFuncionario() throws DaoException {
+		setFont(new Font("Dialog", Font.BOLD, 12));
 		setTitle("Cadastro de Funcion\u00E1rios");
 		setIconImage(Toolkit.getDefaultToolkit().getImage(CadFuncionario.class.getResource("/br/com/images/cadForm.jpg")));
 		int width = 800;
@@ -91,18 +98,12 @@ public class CadFuncionario extends JDialog {
         getContentPane().add(lista);
         lista.setLayout(null);
         
-        JLabel lblFuncionriosCadastrados = new JLabel("Funcion\u00E1rios Cadastrados");
-        lblFuncionriosCadastrados.setFont(new Font("Kalinga", Font.BOLD, 16));
-        lblFuncionriosCadastrados.setHorizontalAlignment(SwingConstants.CENTER);
-        lblFuncionriosCadastrados.setBackground(Color.WHITE);
-        lblFuncionriosCadastrados.setBounds(10, 11, 612, 29);
-        lista.add(lblFuncionriosCadastrados);
-        
 
 
           
-          Button Novo = new Button("Adicionar");          
-          Novo.setBounds(10, 530, 70, 22);
+          JButton Novo = new JButton("Adicionar");          
+          Novo.setFont(new Font("Tahoma", Font.BOLD, 12));
+          Novo.setBounds(10, 530, 98, 22);
           lista.add(Novo);                                    
           lista.setVisible(true);       
           table = new JTable();
@@ -144,7 +145,7 @@ public class CadFuncionario extends JDialog {
 					   if(opcao == JOptionPane.YES_OPTION){  
 						   try {
 							funcDao.excluirFuncionarios(mat);
-							atualizaLista(table);
+							atualizaLista(table,"");
 						} catch (DaoException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -196,14 +197,40 @@ public class CadFuncionario extends JDialog {
                   table.getColumnModel().getColumn(2).setPreferredWidth(150);
                   table.getColumnModel().getColumn(2).setMinWidth(150);
                   table.setBounds(39, 175, 530, 232);
-                  atualizaLista(table);
+                  atualizaLista(table,"");
                   
                   
                   JScrollPane scrollPane = new JScrollPane();
-                  scrollPane.setBounds(20, 51, 602, 473);
+                  scrollPane.setBounds(20, 42, 602, 482);
                   lista.add(scrollPane);
    
                   scrollPane.setViewportView(table);
+                  
+                  JLabel lblPesquisa = new JLabel("Pesquisa: ");
+                  lblPesquisa.setFont(new Font("Tahoma", Font.BOLD, 12));
+                  lblPesquisa.setBounds(22, 11, 61, 20);
+                  lista.add(lblPesquisa);
+                  
+                  textField_6 = new JTextField();
+                  textField_6.setBounds(82, 11, 158, 20);
+                  lista.add(textField_6);
+                  textField_6.setColumns(10);
+                  
+                  JButton btnFiltrar = new JButton("Filtrar");
+                  btnFiltrar.addActionListener(new ActionListener() {
+                  	public void actionPerformed(ActionEvent arg0) {
+                  		try {
+							atualizaLista(table,textField_6.getText().toString());
+						} catch (DaoException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+                  	}
+                  });
+                  btnFiltrar.setFont(new Font("Tahoma", Font.BOLD, 11));
+                  btnFiltrar.setBounds(242, 11, 70, 20);
+                  lista.add(btnFiltrar);
+                  lista.setFocusTraversalPolicy(new FocusTraversalOnArray(new Component[]{textField_6, Novo, btnFiltrar, lblPesquisa, scrollPane, table}));
                   
 
                   
@@ -299,21 +326,20 @@ public class CadFuncionario extends JDialog {
 					@Override
 					public void actionPerformed(ActionEvent arg0) {
 					  String sexo = "";
-					  String senha = new String(passwordField.getPassword()); 
 					  String cSenha = new String(passwordField_1.getPassword());
 					  if(radioButton.isSelected()){
 						  sexo = "M";
 					  }else{
 						  sexo = "F";						  
 					  }
-						if(senha.equals(cSenha)){
+					  
+					  if( validarFormulário() ){
 							Funcionario obj = new Funcionario();
-							
-							obj.setCpf(textField_2.getText());
+							obj.setCpf(MascaraUtil.hideMascara(textField_3).getText());
 							obj.setEmail(textField_1.getText());
 							obj.setLogin(textField_4.getText());
 							obj.setNome(textField.getText());
-							obj.setRg(textField_3.getText());
+							obj.setRg(textField_2.getText());
 							obj.setSenha(cSenha);
 							obj.setSexo(sexo);
 							FuncionarioDao objDAO = new FuncionarioDao();
@@ -327,16 +353,14 @@ public class CadFuncionario extends JDialog {
 									obj.setId(matr);
 									objDAO.atualizarFuncionario(obj);
 									JOptionPane.showMessageDialog(formulario, "Dados atualizados com sucesso!");
-								}								
-								atualizaLista(table);
+								}		
+								limpaFormulario();
+								atualizaLista(table,"");
 							} catch (DaoException e) {
 								e.printStackTrace();
 							}
 
-						}else{
-							JOptionPane.showMessageDialog(formulario, "Os campos senha e confirme a senha devem ter o mesmo conteúdo!");
-						}
-					  
+						} 
 					}
 				});
                   
@@ -367,7 +391,7 @@ public class CadFuncionario extends JDialog {
                   panel.add(textField_2);
                   textField_2.setColumns(10);
                   
-                  textField_3 = new JTextField();
+                  textField_3 = new JFormattedTextField(MascaraUtil.setMascara("###.###.###-##"));
                   textField_3.setBounds(92, 118, 127, 20);
                   panel.add(textField_3);
                   textField_3.setColumns(10);
@@ -394,22 +418,22 @@ public class CadFuncionario extends JDialog {
                   	}
                   });
 
-        Novo.addActionListener(new ActionListener() {
+            Novo.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent arg0) {
         		lista.setVisible(false);
         		formulario.setVisible(true);
         		limpaFormulario();
         		try {
-                  			atualizaLista(table);
-                  		} catch (DaoException e) {
-                  			// TODO Auto-generated catch block
-                  			e.printStackTrace();
-                  		}
+                  	atualizaLista(table,"");
+                } catch (DaoException e) {
+                	// TODO Auto-generated catch block
+                	e.printStackTrace();
+                }
         	}
         });	
 	}
 	
-	public void atualizaLista(JTable lista) throws DaoException{
+	public void atualizaLista(JTable lista,String nome) throws DaoException{
 		
 		DefaultTableModel dtm = (DefaultTableModel) table.getModel();
 
@@ -431,7 +455,7 @@ public class CadFuncionario extends JDialog {
 
         dtm.setRowCount(0); 
 		List<Funcionario> listaFunc  = new ArrayList<Funcionario>();
- 		listaFunc = funcDao.consultarFuncionarios();
+ 		listaFunc = funcDao.consultarFuncionarios(nome);
  		String dados[] = new String[3]; 
 		for (Funcionario obj : listaFunc) {
 			dados[0] = String.valueOf(obj.getId()) ;
@@ -458,11 +482,11 @@ public class CadFuncionario extends JDialog {
 	}	
 
 	public void atualizaFormulario(Funcionario objFunc){
-		textField_2.setText(objFunc.getCpf());
+		textField_2.setText(objFunc.getRg());
 		textField_1.setText(objFunc.getEmail());
 		textField_4.setText(objFunc.getLogin());
 		textField.setText(objFunc.getNome());
-		textField_3.setText(objFunc.getRg());
+		textField_3.setText(objFunc.getCpf());
 		passwordField.setText("");
 		passwordField_1.setText("");
 		Integer matr = objFunc.getId();
@@ -487,5 +511,44 @@ public class CadFuncionario extends JDialog {
 		passwordField_1.setText("");
 		radioButton.setSelected(true);
 	}
-}
+	
+	public boolean validarFormulário(){
+		boolean result = true;
 
+		if(!ValidacaoUtil.textFieldVazio(textField)){
+			JOptionPane.showMessageDialog(null, "Campo Nome Vazio!");
+			result = false;
+		}
+		if(!ValidacaoUtil.textFieldVazio(textField_1)){
+			JOptionPane.showMessageDialog(null, "Campo e-mail Vazio!");
+			result = false;
+		}
+		if(!ValidacaoUtil.textFieldVazio(textField_2)){
+			JOptionPane.showMessageDialog(null, "Campo Rg Vazio!");
+			result = false;
+		}
+		if(!ValidacaoUtil.textFieldVazio(textField_3)){
+			JOptionPane.showMessageDialog(null, "Campo Cpf Vazio!");
+			result = false;
+		}
+		if(!ValidacaoUtil.textFieldVazio(textField_4)){
+			JOptionPane.showMessageDialog(null, "Campo Login Vazio!");
+			result = false;
+		}
+		if(!ValidacaoUtil.textFieldVazio(passwordField)){
+			JOptionPane.showMessageDialog(null, "Campo Senha Vazio!");
+			result = false;
+		}
+		if(!ValidacaoUtil.textFieldVazio(passwordField_1)){
+			JOptionPane.showMessageDialog(null, "Campo confirmar senha Vazio!");
+			result = false;
+		}
+		
+		if(!ValidacaoUtil.passwordsIguais(passwordField, passwordField_1)){
+			JOptionPane.showMessageDialog(null, "Campos senha e confirmar senha devem ser iguais!");
+			result = false;
+		}		
+		return result;
+	}
+	
+}

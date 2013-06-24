@@ -42,6 +42,9 @@ public class FuncionarioDao {
 	
 	private static final  String CONSULTA_FUNCIONARIOS =
 			"select * from funcionario order by nome_funcionario";
+
+	private static final  String CONSULTA_FUNCIONARIOS_NOME =
+			"select * from funcionario where nome_funcionario like ? order by nome_funcionario";
 	
 	private static final  String CONSULTA_FUNCIONARIO_ID = 
 			"select * from funcionario where idfuncionario = ?";
@@ -73,13 +76,18 @@ public class FuncionarioDao {
 	}		
 
 	
-	public List<Funcionario> consultarFuncionarios() throws DaoException{		
+	public List<Funcionario> consultarFuncionarios(String nome) throws DaoException{		
 		Connection conn = DbUtil.getConnection();
 		PreparedStatement statement = null;
 		ResultSet result = null;
 		List<Funcionario> listaFunc = new ArrayList<Funcionario>();
 		try {
-			statement = conn.prepareStatement(CONSULTA_FUNCIONARIOS);
+			if(nome.equals("")){
+				statement = conn.prepareStatement(CONSULTA_FUNCIONARIOS);
+			}else{
+				statement = conn.prepareStatement(CONSULTA_FUNCIONARIOS_NOME);
+				statement.setString(1, "%"+nome+"%");
+			}
 			result = statement.executeQuery();
 			while (result.next()) {
 				Funcionario objFunc = new Funcionario();
